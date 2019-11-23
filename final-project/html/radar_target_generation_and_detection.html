@@ -1,0 +1,513 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>radar_target_generation_and_detection</title><meta name="generator" content="MATLAB 9.7"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-10-21"><meta name="DC.source" content="radar_target_generation_and_detection.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Radar Specifications</a></li><li><a href="#3">User Defined Range and Velocity of target</a></li><li><a href="#4">FMCW Waveform Generation</a></li><li><a href="#5">Signal generation and Moving Target simulation</a></li><li><a href="#6">RANGE MEASUREMENT</a></li><li><a href="#7">RANGE DOPPLER RESPONSE</a></li><li><a href="#8">CFAR implementation</a></li></ul></div><pre class="codeinput">clear <span class="string">all</span>;
+clc;
+</pre><h2 id="2">Radar Specifications</h2><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% Frequency of operation = 77GHz</span>
+<span class="comment">% Max Range = 200m</span>
+<span class="comment">% Range Resolution = 1 m</span>
+<span class="comment">% Max Velocity = 100 m/s</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+</pre><h2 id="3">User Defined Range and Velocity of target</h2><p><b>%TODO</b> : define the target's initial position and velocity. Note : Velocity remains contant</p><pre class="codeinput">target_range = 100;
+target_velocity = 50;
+
+radar_max_range = 200;
+radar_range_resolution = 1;
+radar_max_velocity = 100;
+speed_of_light = 3e8;
+</pre><h2 id="4">FMCW Waveform Generation</h2><pre class="codeinput"><span class="comment">% *%TODO* :</span>
+<span class="comment">%Design the FMCW waveform by giving the specs of each of its parameters.</span>
+<span class="comment">% Calculate the Bandwidth (B), Chirp Time (Tchirp) and slope (slope) of the FMCW</span>
+<span class="comment">% chirp using the requirements above.</span>
+
+<span class="comment">%Operating carrier frequency of Radar</span>
+fc = 77e9;             <span class="comment">%carrier freq Hz</span>
+B = speed_of_light /(2 * radar_range_resolution);
+
+<span class="comment">% The sweep time can be computed based on the time needed for the signal to travel the unambiguous</span>
+<span class="comment">% maximum range. In general, for an FMCW radar system, the sweep time should be at least</span>
+<span class="comment">% 5 to 6 times the round trip time. This example uses a factor of 5.5.</span>
+t_sweep = 5.5;
+t_chirp = t_sweep * 2 * (radar_max_range/speed_of_light);
+slope = B / t_chirp;
+
+<span class="comment">%The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT</span>
+<span class="comment">%for Doppler Estimation.</span>
+Nd = 128;                   <span class="comment">% #of doppler cells OR #of sent periods % number of chirps</span>
+
+<span class="comment">%The number of samples on each chirp.</span>
+Nr = 1024;                  <span class="comment">%for length of time OR # of range cells</span>
+
+<span class="comment">% Timestamp for running the displacement scenario for every sample on each</span>
+<span class="comment">% chirp</span>
+t = linspace(0,Nd*t_chirp,Nr*Nd); <span class="comment">%total time for samples</span>
+
+<span class="comment">%Creating the vectors for Tx, Rx and Mix based on the total samples input.</span>
+Tx = zeros(1, length(t)); <span class="comment">%transmitted signal</span>
+Rx = zeros(1, length(t)); <span class="comment">%received signal</span>
+Mix = zeros(1, length(t)); <span class="comment">%beat signal</span>
+
+
+<span class="comment">%Similar vectors for range_covered and time delay.</span>
+r_t = zeros(1, length(t));
+td = zeros(1, length(t));
+</pre><h2 id="5">Signal generation and Moving Target simulation</h2><p>Running the radar scenario over the time.</p><pre class="codeinput"><span class="keyword">for</span> i = 1 : length(t)
+  <span class="comment">% *%TODO* :</span>
+  <span class="comment">%For each time stamp update the Range of the Target for constant velocity.</span>
+  r_t(i) = target_range + (target_velocity*t(i));
+  td(i) = (2 * r_t(i)) / speed_of_light;
+
+  <span class="comment">% *%TODO* :</span>
+  <span class="comment">%For each time sample we need update the transmitted and</span>
+  <span class="comment">%received signal.</span>
+  Tx(i) = cos(2 * pi * (fc * t(i) + 0.5 * slope * t(i)^2));
+  Rx(i)  = cos(2 * pi * (fc * (t(i) - td(i)) + 0.5 * slope * (t(i) - td(i))^2));
+
+  <span class="comment">% *%TODO* :</span>
+  <span class="comment">%Now by mixing the train_cellsansmit and Receive generate the beat signal</span>
+  <span class="comment">%This is done by element wise matrix multiplication of train_cellsansmit and</span>
+  <span class="comment">%Receiver Signal</span>
+  Mix(i) = Tx(i) .* Rx(i);
+<span class="keyword">end</span>
+</pre><h2 id="6">RANGE MEASUREMENT</h2><p><b>%TODO</b> :</p><pre class="codeinput"><span class="comment">%reshape the vector into Nr*Nd array. Nr and Nd here would also define the size of</span>
+<span class="comment">%Range and Doppler FFT respectively.</span>
+Mix = reshape(Mix, [Nr, Nd]);
+
+<span class="comment">% *%TODO* :</span>
+<span class="comment">%run the FFT on the beat signal along the range bins dimension (Nr) and</span>
+<span class="comment">%normalize.</span>
+sig_fft = fft(Mix, Nr);
+
+<span class="comment">% *%TODO* :</span>
+<span class="comment">% Take the absolute value of FFT output</span>
+sig_fft = abs(sig_fft);
+sig_fft = sig_fft ./ max(sig_fft); <span class="comment">% Normalize</span>
+
+<span class="comment">% *%TODO* :</span>
+<span class="comment">% Output of FFT is double sided signal, but we are interested in only one side of the spectrum.</span>
+<span class="comment">% Hence we throw out half of the samples.</span>
+sig_fft = sig_fft(1 : Nr/2-1);
+
+<span class="comment">%plotting the range</span>
+<span class="comment">%figure ('Name','Range from First FFT')</span>
+
+<span class="comment">% *%TODO* :</span>
+<span class="comment">% plot FFT output</span>
+plot(sig_fft);
+axis ([0 200 0 1]);
+title(<span class="string">'Range from First FFT'</span>);
+ylabel(<span class="string">'Normalized Amplitude'</span>);
+xlabel(<span class="string">'Range'</span>);
+</pre><img vspace="5" hspace="5" src="radar_target_generation_and_detection_01.png" alt=""> <h2 id="7">RANGE DOPPLER RESPONSE</h2><p>The 2D FFT implementation is already provided here. This will run a 2DFFT on the mixed signal (beat signal) output and generate a range doppler map.You will implement CFAR on the generated RDM</p><pre class="codeinput"><span class="comment">% Range Doppler Map Generation.</span>
+
+<span class="comment">% The output of the 2D FFT is an image that has reponse in the range and</span>
+<span class="comment">% doppler FFT bins. So, it is important to convert the axis from bin sizes</span>
+<span class="comment">% to range and doppler based on their Max values.</span>
+
+Mix = reshape(Mix, [Nr, Nd]);
+
+<span class="comment">% 2D FFT using the FFT size for both dimensions.</span>
+sig_fft2 = fft2(Mix, Nr, Nd);
+
+<span class="comment">% Taking just one side of signal from Range dimension.</span>
+sig_fft2 = sig_fft2(1 : Nr/2, 1 : Nd);
+sig_fft2 = fftshift(sig_fft2);
+
+range_doppler_map = abs(sig_fft2);
+range_doppler_map = 10 * log10(range_doppler_map);
+
+<span class="comment">%use the surf function to plot the output of 2DFFT and to show axis in both</span>
+<span class="comment">%dimensions</span>
+doppler_axis = linspace(-100, 100, Nd);
+range_axis = linspace(-200, 200, Nr/2) * ((Nr/2) / 400);
+
+<span class="comment">% Additional views of the surface plot</span>
+figure (<span class="string">'Name'</span>, <span class="string">'Amplitude and Range From FFT2'</span>);
+surf(doppler_axis, range_axis, range_doppler_map);
+title(<span class="string">'Amplitude and Range From FFT2'</span>);
+xlabel(<span class="string">'Speed'</span>);
+ylabel(<span class="string">'Range'</span>);
+zlabel(<span class="string">'Amplitude'</span>);
+</pre><img vspace="5" hspace="5" src="radar_target_generation_and_detection_02.png" alt=""> <img vspace="5" hspace="5" src="radar_target_generation_and_detection_03.png" alt=""> <h2 id="8">CFAR implementation</h2><pre class="codeinput"><span class="comment">%Slide Window through the complete Range Doppler Map</span>
+<span class="comment">% *%TODO* :</span>
+<span class="comment">%Select the number of train_cellsaining Cells in both the dimensions.</span>
+train_cells = 10;
+train_band = 8;
+
+<span class="comment">% *%TODO* :</span>
+<span class="comment">%Select the number of Guard Cells in both dimensions around the Cell under</span>
+<span class="comment">%test (CUT) for accurate estimation</span>
+guard_cells = 4;
+guard_band = 4;
+
+<span class="comment">% *%TODO* :</span>
+<span class="comment">% offset the threshold by SNR value in dB</span>
+offset = 1.4;
+
+<span class="comment">% *%TODO* :</span>
+<span class="comment">%design a loop such that it slides the CUT across range doppler map by</span>
+<span class="comment">%giving margins at the edges for train_cellsaining and Guard Cells.</span>
+<span class="comment">%For every iteration sum the signal level within all the training</span>
+<span class="comment">%cells. To sum convert the value from logarithmic to linear using db2pow</span>
+<span class="comment">%function. Average the summed values for all of the training</span>
+<span class="comment">%cells used. After averaging convert it back to logarithimic using pow2db.</span>
+<span class="comment">%Further add the offset to it to determine the threshold. Next, compare the</span>
+<span class="comment">%signal under CUT with this threshold. If the CUT level &gt; threshold assign</span>
+<span class="comment">%it a value of 1, else equate it to 0.</span>
+
+
+<span class="comment">% Use RDM[x,y] as the matrix from the output of 2D FFT for implementing</span>
+<span class="comment">% CFAR</span>
+
+range_doppler_map = range_doppler_map / max(range_doppler_map(:));
+
+<span class="keyword">for</span> row1 = train_cells + guard_cells + 1 : (Nr/2) - (train_cells + guard_cells)
+  <span class="keyword">for</span> col1 = train_band + guard_band + 1 : (Nd) - (train_band + guard_band)
+    <span class="comment">%Create a vector to store noise_level for each iteration on training cells</span>
+    noise_level = zeros(1, 1);
+
+    <span class="keyword">for</span> row2 = row1 - (train_cells + guard_cells) : row1 + (train_cells + guard_cells)
+      <span class="keyword">for</span> col2 = col1 - (train_band + guard_band) : col1 + (train_band + guard_band)
+        <span class="keyword">if</span> (abs(row1 - row2) &gt; guard_cells || abs(col1 - col2) &gt; guard_band)
+          noise_level = noise_level + db2pow(range_doppler_map(row2, col2));
+        <span class="keyword">end</span>
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">% Calculate threshold from noise average then add the offset</span>
+    threshold = pow2db(noise_level / (2 * (train_band + guard_band + 1) * 2 * (train_cells + guard_cells + 1) - (guard_cells * guard_band) - 1));
+    threshold = threshold + offset;
+
+    cell_under_test = range_doppler_map(row1,col1);
+
+    <span class="keyword">if</span> (cell_under_test &lt; threshold)
+      range_doppler_map(row1, col1) = 0;
+    <span class="keyword">else</span>
+      range_doppler_map(row1, col1) = 1;
+    <span class="keyword">end</span>
+
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% *%TODO* :</span>
+<span class="comment">% The process above will generate a thresholded block, which is smaller</span>
+<span class="comment">%than the Range Doppler Map as the CUT cannot be located at the edges of</span>
+<span class="comment">%matrix. Hence,few cells will not be thresholded. To keep the map size same</span>
+<span class="comment">% set those values to 0.</span>
+range_doppler_map(range_doppler_map~=0 &amp; range_doppler_map~=1) = 0;
+
+<span class="comment">% *%TODO* :</span>
+<span class="comment">%display the CFAR output using the Surf function like we did for Range</span>
+<span class="comment">%Doppler Response output.</span>
+figure(<span class="string">'Name'</span>, <span class="string">'CA-CFAR Filtered RDM'</span>)
+surf(doppler_axis, range_axis, range_doppler_map);
+colorbar;
+title( <span class="string">'CA-CFAR Filtered RDM surface plot'</span>);
+xlabel(<span class="string">'Speed'</span>);
+ylabel(<span class="string">'Range'</span>);
+zlabel(<span class="string">'Normalized Amplitude'</span>);
+view(315, 45);
+</pre><img vspace="5" hspace="5" src="radar_target_generation_and_detection_04.png" alt=""> <img vspace="5" hspace="5" src="radar_target_generation_and_detection_05.png" alt=""> <img vspace="5" hspace="5" src="radar_target_generation_and_detection_06.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+clear all;
+clc;
+
+%% Radar Specifications
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Frequency of operation = 77GHz
+% Max Range = 200m
+% Range Resolution = 1 m
+% Max Velocity = 100 m/s
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% User Defined Range and Velocity of target
+% *%TODO* :
+% define the target's initial position and velocity. Note : Velocity
+% remains contant
+target_range = 100;
+target_velocity = 50;
+
+radar_max_range = 200;
+radar_range_resolution = 1;
+radar_max_velocity = 100;
+speed_of_light = 3e8;
+
+%% FMCW Waveform Generation
+
+% *%TODO* :
+%Design the FMCW waveform by giving the specs of each of its parameters.
+% Calculate the Bandwidth (B), Chirp Time (Tchirp) and slope (slope) of the FMCW
+% chirp using the requirements above.
+
+%Operating carrier frequency of Radar
+fc = 77e9;             %carrier freq Hz
+B = speed_of_light /(2 * radar_range_resolution);
+
+% The sweep time can be computed based on the time needed for the signal to travel the unambiguous
+% maximum range. In general, for an FMCW radar system, the sweep time should be at least
+% 5 to 6 times the round trip time. This example uses a factor of 5.5.
+t_sweep = 5.5;
+t_chirp = t_sweep * 2 * (radar_max_range/speed_of_light);
+slope = B / t_chirp;
+
+%The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT
+%for Doppler Estimation.
+Nd = 128;                   % #of doppler cells OR #of sent periods % number of chirps
+
+%The number of samples on each chirp.
+Nr = 1024;                  %for length of time OR # of range cells
+
+% Timestamp for running the displacement scenario for every sample on each
+% chirp
+t = linspace(0,Nd*t_chirp,Nr*Nd); %total time for samples
+
+%Creating the vectors for Tx, Rx and Mix based on the total samples input.
+Tx = zeros(1, length(t)); %transmitted signal
+Rx = zeros(1, length(t)); %received signal
+Mix = zeros(1, length(t)); %beat signal
+
+
+%Similar vectors for range_covered and time delay.
+r_t = zeros(1, length(t));
+td = zeros(1, length(t));
+
+%% Signal generation and Moving Target simulation
+% Running the radar scenario over the time.
+
+for i = 1 : length(t)
+  % *%TODO* :
+  %For each time stamp update the Range of the Target for constant velocity.
+  r_t(i) = target_range + (target_velocity*t(i));
+  td(i) = (2 * r_t(i)) / speed_of_light;
+
+  % *%TODO* :
+  %For each time sample we need update the transmitted and
+  %received signal.
+  Tx(i) = cos(2 * pi * (fc * t(i) + 0.5 * slope * t(i)^2));
+  Rx(i)  = cos(2 * pi * (fc * (t(i) - td(i)) + 0.5 * slope * (t(i) - td(i))^2));
+
+  % *%TODO* :
+  %Now by mixing the train_cellsansmit and Receive generate the beat signal
+  %This is done by element wise matrix multiplication of train_cellsansmit and
+  %Receiver Signal
+  Mix(i) = Tx(i) .* Rx(i);
+end
+
+%% RANGE MEASUREMENT
+% *%TODO* :
+%reshape the vector into Nr*Nd array. Nr and Nd here would also define the size of
+%Range and Doppler FFT respectively.
+Mix = reshape(Mix, [Nr, Nd]);
+
+% *%TODO* :
+%run the FFT on the beat signal along the range bins dimension (Nr) and
+%normalize.
+sig_fft = fft(Mix, Nr);
+
+% *%TODO* :
+% Take the absolute value of FFT output
+sig_fft = abs(sig_fft);
+sig_fft = sig_fft ./ max(sig_fft); % Normalize
+
+% *%TODO* :
+% Output of FFT is double sided signal, but we are interested in only one side of the spectrum.
+% Hence we throw out half of the samples.
+sig_fft = sig_fft(1 : Nr/2-1);
+
+%plotting the range
+%figure ('Name','Range from First FFT')
+
+% *%TODO* :
+% plot FFT output
+plot(sig_fft);
+axis ([0 200 0 1]);
+title('Range from First FFT');
+ylabel('Normalized Amplitude');
+xlabel('Range');
+
+%% RANGE DOPPLER RESPONSE
+% The 2D FFT implementation is already provided here. This will run a 2DFFT
+% on the mixed signal (beat signal) output and generate a range doppler
+% map.You will implement CFAR on the generated RDM
+
+% Range Doppler Map Generation.
+
+% The output of the 2D FFT is an image that has reponse in the range and
+% doppler FFT bins. So, it is important to convert the axis from bin sizes
+% to range and doppler based on their Max values.
+
+Mix = reshape(Mix, [Nr, Nd]);
+
+% 2D FFT using the FFT size for both dimensions.
+sig_fft2 = fft2(Mix, Nr, Nd);
+
+% Taking just one side of signal from Range dimension.
+sig_fft2 = sig_fft2(1 : Nr/2, 1 : Nd);
+sig_fft2 = fftshift(sig_fft2);
+
+range_doppler_map = abs(sig_fft2);
+range_doppler_map = 10 * log10(range_doppler_map);
+
+%use the surf function to plot the output of 2DFFT and to show axis in both
+%dimensions
+doppler_axis = linspace(-100, 100, Nd);
+range_axis = linspace(-200, 200, Nr/2) * ((Nr/2) / 400);
+
+% Additional views of the surface plot
+figure ('Name', 'Amplitude and Range From FFT2');
+surf(doppler_axis, range_axis, range_doppler_map);
+title('Amplitude and Range From FFT2');
+xlabel('Speed');
+ylabel('Range');
+zlabel('Amplitude');
+
+%% CFAR implementation
+%Slide Window through the complete Range Doppler Map
+% *%TODO* :
+%Select the number of train_cellsaining Cells in both the dimensions.
+train_cells = 10;
+train_band = 8;
+
+% *%TODO* :
+%Select the number of Guard Cells in both dimensions around the Cell under
+%test (CUT) for accurate estimation
+guard_cells = 4;
+guard_band = 4;
+
+% *%TODO* :
+% offset the threshold by SNR value in dB
+offset = 1.4;
+
+% *%TODO* :
+%design a loop such that it slides the CUT across range doppler map by
+%giving margins at the edges for train_cellsaining and Guard Cells.
+%For every iteration sum the signal level within all the training
+%cells. To sum convert the value from logarithmic to linear using db2pow
+%function. Average the summed values for all of the training
+%cells used. After averaging convert it back to logarithimic using pow2db.
+%Further add the offset to it to determine the threshold. Next, compare the
+%signal under CUT with this threshold. If the CUT level > threshold assign
+%it a value of 1, else equate it to 0.
+
+
+% Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
+% CFAR
+
+range_doppler_map = range_doppler_map / max(range_doppler_map(:));
+
+for row1 = train_cells + guard_cells + 1 : (Nr/2) - (train_cells + guard_cells)
+  for col1 = train_band + guard_band + 1 : (Nd) - (train_band + guard_band)
+    %Create a vector to store noise_level for each iteration on training cells
+    noise_level = zeros(1, 1);
+
+    for row2 = row1 - (train_cells + guard_cells) : row1 + (train_cells + guard_cells)
+      for col2 = col1 - (train_band + guard_band) : col1 + (train_band + guard_band)
+        if (abs(row1 - row2) > guard_cells || abs(col1 - col2) > guard_band)
+          noise_level = noise_level + db2pow(range_doppler_map(row2, col2));
+        end
+      end
+    end
+
+    % Calculate threshold from noise average then add the offset
+    threshold = pow2db(noise_level / (2 * (train_band + guard_band + 1) * 2 * (train_cells + guard_cells + 1) - (guard_cells * guard_band) - 1));
+    threshold = threshold + offset;
+
+    cell_under_test = range_doppler_map(row1,col1);
+
+    if (cell_under_test < threshold)
+      range_doppler_map(row1, col1) = 0;
+    else
+      range_doppler_map(row1, col1) = 1;
+    end
+
+  end
+end
+
+% *%TODO* :
+% The process above will generate a thresholded block, which is smaller
+%than the Range Doppler Map as the CUT cannot be located at the edges of
+%matrix. Hence,few cells will not be thresholded. To keep the map size same
+% set those values to 0.
+range_doppler_map(range_doppler_map~=0 & range_doppler_map~=1) = 0;
+
+% *%TODO* :
+%display the CFAR output using the Surf function like we did for Range
+%Doppler Response output.
+figure('Name', 'CA-CFAR Filtered RDM')
+surf(doppler_axis, range_axis, range_doppler_map);
+colorbar;
+title( 'CA-CFAR Filtered RDM surface plot');
+xlabel('Speed');
+ylabel('Range');
+zlabel('Normalized Amplitude');
+view(315, 45);
+
+##### SOURCE END #####
+--></body></html>
